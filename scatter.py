@@ -2,16 +2,28 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from pandas import ExcelFile
 import sys
+import numpy as np
+import seaborn as sns
 
 filepath = sys.argv[1]
-originalSheet = sys.argv[2]
+originalSheet = 'output'
 
 
 df = pd.read_excel(filepath, sheet_name = originalSheet)
 
-plt.figure()
+# groups = df.groupby('Tank')
+#
+# plt.figure()
+#
+# ax = plt.gca()
+#
+#
+# plt.scatter(x=df['Age_days'],y=df['Daily Growth'], c = groups)
+# plt.show()
 
-ax = plt.gca()
 
-plt.scatter(x=df['Average Temp'],y=df['Daily Growth'])
+
+
+sns.lmplot('Age_days', 'Daily Growth', data=df, hue='Tank', fit_reg=False)
+
 plt.show()

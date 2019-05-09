@@ -30,13 +30,12 @@ for row in range(1,Rows):
         sum = 0.0
 
 # keeping the cols I need
-df1 = df[['Tank','Weight sample g','Age_days','Temp','SumTemp']]
+df1 = df[['Tank','Weight sample g','Age_days','Temp','SumTemp','Date']]
 
 # Popping the lines with null weights
 df1 = df1[df1['Weight sample g'].notnull()]
 
 totalRows = df1['Tank'].count()
-
 # Setting new column 'Days Apart'
 df1['Days Apart'] = 0 * totalRows
 # Sorting the data by tank name and number of days in tank
@@ -78,10 +77,13 @@ for i in range(1,totalRows):
     else:
         avTemp = 0.0
     df1.iloc[i , df1.columns.get_loc('Average Temp')] = avTemp
-
+# Setting new column 'fromDate'
+df1['fromDate'] = 0 * totalRows
+# Setting new column 'toDate'
+df1['toDate'] = df1['Date']
 Rows = totalRows
 
-# I seperate eache tank so I can study its growth rate
+# I seperate each tank so I can study its growth rate
 # the tanks will be joined later.
 tankNames = []
 # I collect the tank names.
@@ -95,7 +97,7 @@ numOfTanks = len(tankNames)
 tankDf = []
 # I create each tank's dataframe and add it to a list
 for i in range(numOfTanks):
-    tankDf.append(pd.DataFrame(columns=['Tank','Weight sample g','Age_days','Days Apart','Weight Difference','Daily Growth','Average Temp']))
+    tankDf.append(pd.DataFrame(columns=['Tank','Weight sample g','Age_days','Days Apart','Weight Difference','Daily Growth','Average Temp','fromDate','toDate']))
 
 
 i = 0
@@ -113,8 +115,7 @@ while (condition):
             condition = False #changes the condition of while loop and terminates it
             break #terminates for loop
 
-
-# function to sort out bad data
+# function to sort out bad data-------------
 def badData(datafr):
     Rows = datafr['Tank'].count()
 
@@ -122,8 +123,6 @@ def badData(datafr):
     for i in range(Rows):
         if (datafr['Daily Growth'][i] > 5 or datafr['Daily Growth'][i] < -5):
             datafr = datafr.drop([i])
-
-
 
     Rows2 = datafr['Tank'].count()
     # print(Rows2)
@@ -142,20 +141,28 @@ def badData(datafr):
 
     finalDf = datafr.loc[datafr['steadyGrowth'] == 1]
     return finalDf
-# end of function
+# end of function-------------
 
-FinalDf = pd.DataFrame(columns=['Tank','Weight sample g','Age_days','Days Apart','Weight Difference','Daily Growth','Average Temp','steadyGrowth'])
+for i in range(numOfTanks):
+    tankRows = tankDf[i]['Tank'].count()
+    tankDf[i] = tankDf[i].sort_values(by=['toDate'])
+    # assigning values to column 'fromDate'
+    for j in range(1,tankRows):
+        tankDf[i].iloc[j , tankDf[i].columns.get_loc('fromDate')] = tankDf[i].iloc[j-1]['toDate']
 
+
+
+FinalDf = pd.DataFrame(columns=['Tank','Weight sample g','Age_days','Days Apart','Weight Difference','Daily Growth','Average Temp','steadyGrowth','fromDate','toDate'])
 # calling the badData function for each of the tank dataframes and joinning them into one.
 for i in range(numOfTanks):
     final = badData(tankDf[i])
     FinalDf = FinalDf.append(final,sort=True)
 
-FinalDf = FinalDf[['Tank','Weight sample g','Age_days','Days Apart','Weight Difference','Daily Growth','Average Temp']]
+FinalDf = FinalDf[['Tank','Weight sample g','Age_days','Days Apart','Weight Difference','Daily Growth','Average Temp','fromDate','toDate']]
 FinalDf.to_excel('Output_'+filepath, sheet_name = 'output')
-
+print(FinalDf)
 
 # plotting the data and giving a different colour for each tank
 sns.lmplot('Age_days', 'Daily Growth', data=FinalDf, hue='Tank', fit_reg=False)
 
-plt.show()
+# plt.show()

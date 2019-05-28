@@ -83,6 +83,7 @@ df1['fromDate'] = 0 * totalRows
 df1['toDate'] = df1['Date'].apply(lambda x: x.date().isoformat())
 Rows = totalRows
 
+
 # I seperate each tank so I can study its growth rate
 # the tanks will be joined later.
 tankNames = df1['Tank'].unique().tolist()
@@ -104,7 +105,6 @@ def badData(datafr):
     Rows = datafr['Tank'].count()
 
     # eliminating the data outliers
-
     lessThan = (datafr['Daily Growth'] < 5)
     moreThan = (datafr['Daily Growth'] > -5)
     datafr = datafr[lessThan & moreThan ]
@@ -114,6 +114,7 @@ def badData(datafr):
     datafr = datafr.sort_values(by=['Age_days'])
 
     datafr = datafr.assign(steadyGrowth=0)
+    datafr.iloc[0, datafr.columns.get_loc('steadyGrowth')] = 1
 # rounding the growth rate to group those with a similar growth rate
     datafr1 = datafr.round({'Daily Growth':1})
 
@@ -128,6 +129,7 @@ def badData(datafr):
 # end of function-------------
 
 for i in range(numOfTanks):
+
     tankRows = tankDf[i]['Tank'].count()
     tankDf[i] = tankDf[i].assign(fromWeight=0)
     tankDf[i]['toWeight'] = tankDf[i]['Weight sample g']
@@ -138,7 +140,6 @@ for i in range(numOfTanks):
         # assigning values to 'fromWeight'
         tankDf[i].iloc[j , tankDf[i].columns.get_loc('fromWeight')] = tankDf[i].iloc[j-1]['toWeight']
 
-
 FinalDf = pd.DataFrame(columns=['Tank','fromWeight','toWeight','Age_days','Days Apart','Weight Difference','Daily Growth','Average Temp','steadyGrowth','fromDate','toDate','Daily feed per fish'])
 # calling the badData function for each of the tank dataframes and joinning them into one.
 for i in range(numOfTanks):
@@ -147,9 +148,10 @@ for i in range(numOfTanks):
 
 FinalDf = FinalDf.sort_values(by=['Tank','toDate'])
 FinalDf = FinalDf[['Tank','fromDate','toDate','Days Apart','Age_days','fromWeight','toWeight','Weight Difference','Daily Growth','Average Temp','Daily feed per fish']]
-# FinalDf.to_excel('Output_'+filepath, sheet_name = 'output')
-print(FinalDf)
 
+
+FinalDf.to_excel('Output_'+filepath, sheet_name = 'output')
+print(FinalDf)
 # plotting the data and giving a different colour for each tank
 sns.lmplot('Age_days', 'Daily Growth', data=FinalDf, hue='Tank', fit_reg=False)
 
